@@ -27,9 +27,6 @@ def set_seed(seed: int):
     torch.cuda.manual_seed_all(seed)
     random.seed(seed)
     np.random.seed(seed)
-    
-def predict(linear_functional, sig_past: torch.Tensor):
-    return torch.from_numpy(linear_functional.predict(sig_past)).float().to(sig_past.device)
 
 def load_obj(filepath):
     """ Generic function to load an object. """
