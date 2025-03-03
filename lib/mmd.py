@@ -3,6 +3,37 @@
 # https://github.com/luchungi/Generative-Model-Signature-MMD/blob/main/sigkernel/loss.py
 
 import torch
+from typing import Optional
+from abc import ABCMeta, abstractmethod
+import numpy as np
+import torch
+
+class Kernel(metaclass=ABCMeta):
+    '''
+    Base class for static kernels.
+    '''
+
+    @abstractmethod
+    def gram_matrix(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
+        pass
+
+    def __call__(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
+        return self.gram_matrix(X, Y)
+
+class LinearKernel(Kernel):
+
+    def __init__(self):
+        super().__init__()
+        self.static_kernel_type = 'linear'
+
+    def gram_matrix(self, X: torch.Tensor, Y: torch.Tensor = None) -> torch.Tensor:
+        return matrix_mult(X, Y, transpose_Y=True)
+    
+
+def matrix_mult(X : torch.Tensor, Y : Optional[torch.Tensor] = None, transpose_X : bool = False, transpose_Y : bool = False) -> torch.Tensor:
+    subscript_X = '...ji' if transpose_X else '...ij'
+    subscript_Y = '...kj' if transpose_Y else '...jk'
+    return torch.einsum(f'{subscript_X},{subscript_Y}->...ik', X, Y if Y is not None else X)
 
 class SignatureKernel():
     def __init__(self, n_levels: int = 5, static_kernel: Optional[Kernel] = None) -> None:
