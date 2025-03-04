@@ -1,3 +1,8 @@
+import torch
+from torch import nn
+import torch.nn.functional as F
+from typing import List
+
 class BetaVAE(nn.Module):
     def __init__(self, x_aug_sig, epoch, batch_size, hidden_dims: List, device) -> None:
         super(BetaVAE, self).__init__()
