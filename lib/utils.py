@@ -17,6 +17,35 @@ def sample_indices(dataset_size, batch_size, device):
     
     return indices.long()
 
+def compute_kernel(x: torch.Tensor, y: torch.Tensor):
+    """Compute RBF kernel between x and y"""
+    x_size = x.size(0)
+    y_size = y.size(0)
+    dim = x.size(1)
+    
+    x = x.unsqueeze(1)  # (x_size, 1, dim)
+    y = y.unsqueeze(0)  # (1, y_size, dim)
+    
+    tiled_x = x.expand(x_size, y_size, dim)
+    tiled_y = y.expand(x_size, y_size, dim)
+    
+    kernel_input = (tiled_x - tiled_y).pow(2).mean(2)/float(dim)
+    return torch.exp(-kernel_input)  # (x_size, y_size)
+
+def compute_mmd(source: torch.Tensor, target: torch.Tensor):
+    """Compute Maximum Mean Discrepancy between two samples"""
+    # Sample from prior (standard normal)
+    batch_size = source.size(0)
+    
+    # Compute kernel matrices
+    xx = compute_kernel(source, source)
+    yy = compute_kernel(target, target)
+    xy = compute_kernel(source, target)
+    
+    # MMD calculation
+    mmd = xx.mean() + yy.mean() - 2*xy.mean()
+    return mmd
+
 def to_numpy(x: torch.Tensor):
     return x.detach().cpu().numpy()
 
