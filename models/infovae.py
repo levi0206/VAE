@@ -2,7 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from typing import List
-from lib.utils import sample_indices
+from lib.utils import sample_indices,compute_mmd
 
 class InfoVAE(nn.Module):
     def __init__(self, x_aug_sig, epoch, batch_size, hidden_dims: List, device) -> None:
@@ -53,35 +53,6 @@ class InfoVAE(nn.Module):
         reconstructed_data = self.decoder(z)
         return reconstructed_data
 
-    def compute_kernel(self, x, y):
-        """Compute RBF kernel between x and y"""
-        x_size = x.size(0)
-        y_size = y.size(0)
-        dim = x.size(1)
-        
-        x = x.unsqueeze(1)  # (x_size, 1, dim)
-        y = y.unsqueeze(0)  # (1, y_size, dim)
-        
-        tiled_x = x.expand(x_size, y_size, dim)
-        tiled_y = y.expand(x_size, y_size, dim)
-        
-        kernel_input = (tiled_x - tiled_y).pow(2).mean(2)/float(dim)
-        return torch.exp(-kernel_input)  # (x_size, y_size)
-
-    def compute_mmd(self, source, target):
-        """Compute Maximum Mean Discrepancy between two samples"""
-        # Sample from prior (standard normal)
-        batch_size = source.size(0)
-        
-        # Compute kernel matrices
-        xx = self.compute_kernel(source, source)
-        yy = self.compute_kernel(target, target)
-        xy = self.compute_kernel(source, target)
-        
-        # MMD calculation
-        mmd = xx.mean() + yy.mean() - 2*xy.mean()
-        return mmd
-
     def loss(self, mean, log_var, sample_data, reconstructed_data, lambda_mmd=10):
         """
         Compute Info-VAE loss
@@ -112,7 +83,7 @@ class InfoVAE(nn.Module):
         z = mean + torch.exp(0.5 * log_var) * torch.randn_like(mean)
         
         # 3. MMD between z and prior
-        mmd_loss = self.compute_mmd(z, z_prior)
+        mmd_loss = compute_mmd(z, z_prior)
         
         # Total loss = reconstruction + λ * MMD
         total_loss = recon_loss + lambda_mmd * mmd_loss
