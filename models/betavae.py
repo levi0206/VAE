@@ -2,6 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from typing import List
+from lib.utils import sample_indices
 
 class BetaVAE(nn.Module):
     def __init__(self, x_aug_sig, epoch, batch_size, hidden_dims: List, device) -> None:
@@ -88,3 +89,34 @@ class BetaVAE(nn.Module):
         _, _, z = self.encode(x)
         reconstructed_data = self.decode(z)
         return reconstructed_data
+    
+def BEtaVAE_train(model,optimizer,beta=1.0):
+    early_stop = 500
+    cnt = 0
+    min_loss = float('inf')
+    for i in range(model.epoch):
+        # Sample time indices of size equal to the batch size
+        # From sefl.x_aug_sig
+        time_indics = sample_indices(model.x_aug_sig.shape[0],model.batch_size,"cuda")
+        sample_data = model.x_aug_sig[time_indics]
+        # Encode 
+        mean, log_var, z = model.encode(sample_data)
+        # Decode
+        reconstructed_data = model.decode(z)
+        # Calculate loss
+        loss = model.loss(mean,log_var,sample_data.view(model.batch_size,-1),reconstructed_data,beta=beta)
+        # Backpropogation
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        # Print loss
+        if i%500==0:
+            print("Epoch {} loss {}".format(i,loss.item()))
+        # Early stop
+        if loss.item()<min_loss:
+            min_loss = loss.item()
+            cnt = 0
+        else:
+            cnt += 1
+            if cnt>early_stop:
+                break
