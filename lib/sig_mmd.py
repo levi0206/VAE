@@ -44,13 +44,17 @@ class SignatureKernel():
             The number of levels of the signature to keep. Higher order terms are truncated
         static_kernel: Kernel, default=None
             The kernel to use for the static kernel. If None, the linear kernel is used.
+        
+        Comments
+        ----------
+        If the input tensor is a signature, reshape it to [batch_size,-1]
         '''
 
         self.n_levels = n_levels
         self.static_kernel = static_kernel if static_kernel is not None else LinearKernel()
 
     def __call__(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
-
+        # print(X.reshape((-1, X.shape[-1])).shape)
         M = self.static_kernel(X.reshape((-1, X.shape[-1])), Y.reshape((-1, Y.shape[-1]))).reshape((X.shape[0], X.shape[1], Y.shape[0], Y.shape[1]))
         M = torch.diff(torch.diff(M, dim=1), dim=-1) # M[i,j,k,l] = k(X[i,j+1], Y[k,l+1]) - k(X[i,j], Y[k,l+1]) - k(X[i,j+1], Y[k,l]) + k(X[i,j], Y[k,l])
         n_X, n_Y = M.shape[0], M.shape[2]
