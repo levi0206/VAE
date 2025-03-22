@@ -5,14 +5,17 @@ from typing import List
 from lib.utils import sample_indices
 
 class BetaVAE(nn.Module):
-    def __init__(self, x_aug_sig, epoch, batch_size, hidden_dims: List, device) -> None:
+    def __init__(self, x_aug_sig, epoch, batch_size, beta, device, hidden_dims: List) -> None:
         super(BetaVAE, self).__init__()
 
         self.x_aug_sig = x_aug_sig
         print("Input tensor shape: {}".format(x_aug_sig.shape))
+        print("Hidden dims: {}".format(hidden_dims))
+        print("Beta: {}".format(beta))
         self.epoch = epoch
         self.batch_size = batch_size
         self.device = device
+        self.beta = beta
 
         # Assume len(hidden_dims)=3.
         self.encoder_mu = nn.Sequential(
@@ -53,7 +56,7 @@ class BetaVAE(nn.Module):
         reconstructed_data = self.decoder(z)
         return reconstructed_data
 
-    def loss(self, mean, log_var, sample_data, reconstructed_data, beta=1.0):
+    def loss(self, model, mean, log_var, sample_data, reconstructed_data):
         """
         Compute β-VAE loss
         
@@ -81,7 +84,7 @@ class BetaVAE(nn.Module):
         kl_loss = -0.5 * torch.sum(1 + log_var - mean.pow(2) - log_var.exp()) / batch_size
         
         # Total loss = reconstruction + β * KL
-        total_loss = recon_loss + beta * kl_loss
+        total_loss = recon_loss + model.beta * kl_loss
         
         return total_loss
 
@@ -90,8 +93,8 @@ class BetaVAE(nn.Module):
         reconstructed_data = self.decode(z)
         return reconstructed_data
     
-def BEtaVAE_train(model,optimizer,beta=1.0):
-    early_stop = 500
+def BetaVAE_train(model,optimizer,beta=1.0):
+    early_stop = 400
     cnt = 0
     min_loss = float('inf')
     for i in range(model.epoch):
@@ -104,14 +107,19 @@ def BEtaVAE_train(model,optimizer,beta=1.0):
         # Decode
         reconstructed_data = model.decode(z)
         # Calculate loss
-        loss = model.loss(mean,log_var,sample_data.view(model.batch_size,-1),reconstructed_data,beta=beta)
+        loss = model.loss(model, mean,log_var,sample_data.view(model.batch_size,-1),reconstructed_data)
+
         # Backpropogation
         optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        if loss<min_loss:
+            loss.backward()
+            optimizer.step()
+            min_loss = loss
+
         # Print loss
-        if i%500==0:
-            print("Epoch {} loss {}".format(i,loss.item()))
+        if i%100==0:
+            print("Epoch {} loss {:4f}".format(i,loss.item()))
+
         # Early stop
         if loss.item()<min_loss:
             min_loss = loss.item()
@@ -119,4 +127,5 @@ def BEtaVAE_train(model,optimizer,beta=1.0):
         else:
             cnt += 1
             if cnt>early_stop:
+                print("min_loss: {:4f}".format(min_loss))
                 break
