@@ -44,10 +44,6 @@ class SignatureKernel():
             The number of levels of the signature to keep. Higher order terms are truncated
         static_kernel: Kernel, default=None
             The kernel to use for the static kernel. If None, the linear kernel is used.
-        
-        Comments
-        ----------
-        If the input tensor is a signature, reshape it to [batch_size,-1]
         '''
 
         self.n_levels = n_levels
