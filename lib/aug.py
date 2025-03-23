@@ -1,8 +1,8 @@
+# Source: https://github.com/SigCGANs/Conditional-Sig-Wasserstein-GANs/blob/master/lib/augmentations.py
+
 import torch
 from dataclasses import dataclass
 from typing import List, Tuple
-
-import signatory
 
 def lead_lag_transform(x: torch.Tensor) -> torch.Tensor:
     """
