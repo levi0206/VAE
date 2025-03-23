@@ -15,3 +15,8 @@
     - Update the ``mmd_loss`` so that the function accepts signatures of tensor shape ``[batch,dim]``.
     - Update ``sig_mmd.py``.
     - Set seed.
+- 0323:
+    - Complete a test for betavae. 
+    - Change all activation functions to ``nn.LeakyReLU()``.
+    - Use ``nn.KLDivLoss(reduction="batchmean")`` instead of self-implemented function.
+    - Use JD divergence instead of KL divergence.
