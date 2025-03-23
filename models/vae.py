@@ -5,11 +5,13 @@ from typing import List
 from lib.utils import sample_indices
 
 class VAE(nn.Module):
-    def __init__(self, x_aug_sig, epoch, batch_size, hidden_dims: List, device) -> None:
+    def __init__(self, x_aug_sig, epoch, batch_size, device, hidden_dims: List) -> None:
         super(VAE, self).__init__()
 
-        self.x_aug_sig = x_aug_sig
         print("Input tensor shape: {}".format(x_aug_sig.shape))
+        print("Hidden dims: {}".format(hidden_dims))
+
+        self.x_aug_sig = x_aug_sig
         self.epoch = epoch
         self.batch_size = batch_size
         self.device = device
@@ -69,7 +71,7 @@ class VAE(nn.Module):
         return reconstructed_data
     
 def VAE_train(model,optimizer):
-    early_stop = 500
+    early_stop = 400
     cnt = 0
     min_loss = float('inf')
     for i in range(model.epoch):
@@ -83,13 +85,17 @@ def VAE_train(model,optimizer):
         reconstructed_data = model.decode(z)
         # Calculate loss
         loss = model.loss(mean,log_var,sample_data.view(model.batch_size,-1),reconstructed_data)
+
         # Backpropogation
         optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        if loss<min_loss:
+            loss.backward()
+            optimizer.step()
+
         # Print loss
-        if i%500==0:
-            print("Epoch {} loss {}".format(i,loss.item()))
+        if i%100==0:
+            print("Epoch {} loss {:4f}".format(i,loss.item()))
+
         # Early stop
         if loss.item()<min_loss:
             min_loss = loss.item()
@@ -97,4 +103,5 @@ def VAE_train(model,optimizer):
         else:
             cnt += 1
             if cnt>early_stop:
+                print("min_loss: {:4f}".format(min_loss))
                 break

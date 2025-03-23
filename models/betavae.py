@@ -114,7 +114,6 @@ def BetaVAE_train(model,optimizer,beta=1.0):
         if loss<min_loss:
             loss.backward()
             optimizer.step()
-            min_loss = loss
 
         # Print loss
         if i%100==0:
