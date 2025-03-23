@@ -4,36 +4,50 @@ import torch.nn.functional as F
 from lib.utils import sample_indices,compute_mmd
 
 class WAE(nn.Module):
-    def __init__(self, x_aug_sig, epoch, batch_size, hidden_dims, latent_dim, device):
+    def __init__(self, x_aug_sig, epoch, batch_size, hidden_dims, device):
         super(WAE, self).__init__()
 
-        self.x_aug_sig = x_aug_sig  # Input tensor [985, 39, 4]
+        self.x_aug_sig = x_aug_sig  
         self.epoch = epoch
         self.batch_size = batch_size
         self.device = device
-        input_dim = hidden_dims[0]  # 156 from your setup (39*4)
+        
+        self.encoder_mu = nn.Sequential(
+            nn.Linear(hidden_dims[0],hidden_dims[1]),
+            nn.LeakyReLU(),
+            nn.Linear(hidden_dims[1],hidden_dims[2]),
+            nn.LeakyReLU(),
+        )
+        self.encoder_sigma = nn.Sequential(
+            nn.Linear(hidden_dims[0],hidden_dims[1]),
+            nn.LeakyReLU(),
+            nn.Linear(hidden_dims[1],hidden_dims[2]),
+            nn.LeakyReLU(),
+        )
+        self.decoder = nn.Sequential(
+            nn.Linear(hidden_dims[2],hidden_dims[1]),
+            nn.LeakyReLU(),
+            nn.Linear(hidden_dims[1],hidden_dims[0]),
+            nn.LeakyReLU(),
+        )
 
-        # Encoder (deterministic, no variational parameters)
-        self.encoder_fc = nn.Linear(input_dim, hidden_dims[1])  # 156 -> 100
-        self.encoder_out = nn.Linear(hidden_dims[1], latent_dim)  # 100 -> 20
-
-        # Decoder
-        self.decoder_fc = nn.Linear(latent_dim, hidden_dims[1])  # 20 -> 100
-        self.decoder_out = nn.Linear(hidden_dims[1], input_dim)  # 100 -> 156
-
-        self.leaky_relu = nn.LeakyReLU()
-
-        self.to(device)
-
+        # To device
+        self.encoder_mu.to(device)
+        self.encoder_sigma.to(device)
+        self.decoder.to(device)
+    
     def encode(self, x):
-        x_flatten = x.view(x.shape[0], -1)  # Flatten input [batch_size, 156]
-        hidden = self.leaky_relu(self.encoder_fc(x_flatten))
-        z = self.encoder_out(hidden)  # Deterministic latent representation [batch_size, latent_dim]
-        return z
-
+        x_flatten = x.view(x.shape[0], -1)
+        mean = self.encoder_mu(x_flatten)
+        log_var = self.encoder_sigma(x_flatten)
+        # Clipping
+        log_var = torch.clamp(log_var, min=-10, max=10)
+        noise = torch.randn(x.shape[0], mean.shape[1]).to(self.device)
+        z = mean + torch.exp(0.5 * log_var).mul(noise)
+        return mean, log_var, z
+        
     def decode(self, z):
-        hidden = self.leaky_relu(self.decoder_fc(z))
-        reconstructed_data = self.decoder_out(hidden)
+        reconstructed_data = self.decoder(z)
         return reconstructed_data
 
     def loss(self, sample_data, reconstructed_data, z, lambda_mmd=10.0):
@@ -41,8 +55,8 @@ class WAE(nn.Module):
         Compute WAE loss: reconstruction + MMD penalty
         
         Args:
-            sample_data: input data [batch_size, 156]
-            reconstructed_data: reconstructed data [batch_size, 156]
+            sample_data: input data [batch_size, sig_degree]
+            reconstructed_data: reconstructed data [batch_size, sig_degree]
             z: latent representation [batch_size, latent_dim]
             lambda_mmd: weight for MMD term
         
@@ -68,7 +82,7 @@ class WAE(nn.Module):
         return total_loss
 
 def WAE_train(model, optimizer):
-    early_stop = 600
+    early_stop = 400
     cnt = 0
     min_loss = float('inf')
     for i in range(model.epoch):
@@ -77,19 +91,20 @@ def WAE_train(model, optimizer):
         sample_data = model.x_aug_sig[time_indices]  # [batch_size, 39, 4]
 
         # Forward pass
-        z = model.encode(sample_data)
+        _,_,z = model.encode(sample_data)
         reconstructed_data = model.decode(z)
 
         # Compute loss
         loss = model.loss(sample_data, reconstructed_data, z, lambda_mmd=10.0)
 
-        # Backpropagation
+        # Backpropogation
         optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        if loss<min_loss:
+            loss.backward()
+            optimizer.step()
 
         # Print loss
-        if i%500==0:
+        if i%100==0:
             print("Epoch {} loss {}".format(i,loss.item()))
         # Early stop
         if loss.item()<min_loss:
@@ -98,4 +113,5 @@ def WAE_train(model, optimizer):
         else:
             cnt += 1
             if cnt>early_stop:
+                print("min_loss: {:4f}".format(min_loss))
                 break
