@@ -26,7 +26,7 @@ class BetaVAE(nn.Module):
         )
         self.encoder_sigma = nn.Sequential(
             nn.Linear(hidden_dims[0],hidden_dims[1]),
-            nn.Tanh(),
+            nn.LeakyReLU(),
             nn.Linear(hidden_dims[1],hidden_dims[2]),
             nn.LeakyReLU(),
         )
