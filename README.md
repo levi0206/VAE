@@ -20,3 +20,4 @@
     - Change all activation functions to ``nn.LeakyReLU()``.
     - Use ``nn.KLDivLoss(reduction="batchmean")`` instead of self-implemented function.
     - Use JD divergence instead of KL divergence.
+    - Fix training loop.
