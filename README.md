@@ -21,3 +21,5 @@
     - Use ``nn.KLDivLoss(reduction="batchmean")`` instead of self-implemented function.
     - Use JD divergence instead of KL divergence.
     - Fix training loop.
+    - We will use VAE, Beta-VAE, Info-VAE, and WAE-MMD for our experiments. 
+    - Complete the full implementation for signature degree 3.
