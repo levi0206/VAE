@@ -22,4 +22,4 @@
     - Use JD divergence instead of KL divergence.
     - Fix training loop.
     - We will use VAE, Beta-VAE, Info-VAE, and WAE-MMD for our experiments. 
-    - Complete the full implementation for signature degree 3.
+    - Complete the full implementation for signature degree 3, 4, and 5.
