@@ -6,27 +6,30 @@ from typing import List
 from lib.utils import sample_indices
 
 class CVAE(nn.Module):
-    def __init__(self, x_aug_sig, x_original, epoch, batch_size, hidden_dims: List, latent_dim, device):
+    def __init__(self, x_aug_sig, x_original, epoch, batch_size, hidden_dims, latent_dim, device):
         super(CVAE, self).__init__()
 
-        self.x_aug_sig = x_aug_sig  # Augmented input tensor [985, 39, 4]
-        self.x_original = x_original  # Original input tensor, assuming shape [985, 39, 4]
+        print("Input tensor shape: {}".format(x_aug_sig.shape))
+        print("Hidden dims: {}".format(hidden_dims))
+
+        self.x_aug_sig = x_aug_sig.to(device)
+        self.x_original = x_original.to(device)
         self.epoch = epoch
         self.batch_size = batch_size
         self.device = device
-        input_dim = hidden_dims[0]  # 156 from your setup (39*4)
+        input_dim = x_aug_sig.shape[1] 
 
-        # Condition dimension from x_original (flattened: 39*4 = 156)
-        condition_dim = x_original.shape[1] * x_original.shape[2]  # 156
+        # Condition dimension from x_original 
+        condition_dim = x_aug_sig.shape[1] 
 
         # Encoder with condition
-        self.encoder_fc = nn.Linear(input_dim + condition_dim, hidden_dims[1])  # 156 + 156 = 312
-        self.encoder_mean = nn.Linear(hidden_dims[1], latent_dim)
-        self.encoder_log_var = nn.Linear(hidden_dims[1], latent_dim)
+        self.encoder_fc = nn.Linear(input_dim + condition_dim, hidden_dims) 
+        self.encoder_mean = nn.Linear(hidden_dims, latent_dim)
+        self.encoder_log_var = nn.Linear(hidden_dims, latent_dim)
 
         # Decoder with condition
-        self.decoder_fc = nn.Linear(latent_dim + condition_dim, hidden_dims[1])  # latent_dim + 156
-        self.decoder_out = nn.Linear(hidden_dims[1], input_dim)
+        self.decoder_fc = nn.Linear(latent_dim + condition_dim, hidden_dims)  
+        self.decoder_out = nn.Linear(hidden_dims, input_dim)
 
         self.leaky_relu = nn.LeakyReLU()
 
@@ -74,6 +77,9 @@ class CVAE(nn.Module):
         return reconstructed_data
 
 def CAVE_train(model, optimizer):
+    early_stop = 400
+    cnt = 0
+    min_loss = float('inf')
     for i in range(model.epoch):
         # Sample same indices for both augmented and original data
         time_indices = sample_indices(model.x_aug_sig.shape[0], model.batch_size, model.device)
@@ -81,17 +87,27 @@ def CAVE_train(model, optimizer):
         condition_data = model.x_original[time_indices]  # [batch_size, 39, 4]
 
         # Forward pass
-        mean, log_var, z = model.encode(sample_data, condition_data)
-        reconstructed_data = model.decode(z, condition_data)
+        mean, log_var, z = model.encode(sample_data, sample_data)
+        reconstructed_data = model.decode(z, sample_data)
 
         # Compute loss
         loss = model.loss(mean, log_var, sample_data.view(model.batch_size, -1), reconstructed_data)
 
-        # Backpropagation
+        # Backpropogation
         optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        if loss<min_loss:
+            loss.backward()
+            optimizer.step()
 
         # Print loss
-        if i % 10 == 0:
-            print(f"Epoch {i}, Loss: {loss.item()}")
+        if i%100==0:
+            print("Epoch {} loss {:4f}".format(i,loss.item()))
+        # Early stop
+        if loss.item()<min_loss:
+            min_loss = loss.item()
+            cnt = 0
+        else:
+            cnt += 1
+            if cnt>early_stop:
+                print("min_loss: {:4f}".format(min_loss))
+                break
