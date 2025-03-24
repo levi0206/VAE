@@ -9,7 +9,7 @@
     - The models are all able to run successfully.
 - 0308:
     - It seems that the WAE with signature kernel is not feasible.
-- 0322 (21:25):
+- 0322:
     - Fix the explosion of loss. The reason is due to incorret implementation. BetaVAE becomes normal.
     - Complete the data example.
     - Update the ``mmd_loss`` so that the function accepts signatures of tensor shape ``[batch,dim]``.
@@ -29,4 +29,4 @@
     - Normalize ``reconstructed_sig`` in the training and testing phase.
     - Finish OU process experiments.
     - Plot training loss.
-    - Update MMD in ``metrics.py``.
+    - Update MMD in ``metrics.py`` and results in each notebook.
