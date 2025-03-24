@@ -55,11 +55,8 @@ def rolling_window(x: torch.Tensor, window_size: int):
 
 def get_stock_price(data_config):
     """
-    Get stock price
-    Returns
-    -------
-    dataset: torch.Tensor
-        torch.tensor of shape (#data, window_size, 1)
+    Get stock price.
+    Shape: (#data, window_size, 1)
     """
     csv_file_name = data_config['ticker']+"_"+data_config['interval']+".csv"
     pt_file_name = data_config['ticker']+"_"+data_config['interval']+"_rolled.pt"
@@ -88,3 +85,18 @@ def get_stock_price(data_config):
         
         save_obj(dataset, pt_file_path)
     return dataset
+def get_OU(theta=0.8,mu=0,sigma=0.7,X0=1.0,T=15.0,dt=0.01):
+    """
+    Get an numpy array OU process of length (T / dt).
+    Shape: (T / dt,)
+    """
+    N = int(T / dt)
+    X = np.zeros(N)
+    X[0] = X0
+
+    # Generate the OU process
+    for t in range(1, N):
+        dW = np.sqrt(dt) * np.random.normal(0, 1)
+        X[t] = X[t-1] + theta * (mu - X[t-1]) * dt + sigma * dW
+
+    return X
