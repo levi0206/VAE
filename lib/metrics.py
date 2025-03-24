@@ -52,6 +52,7 @@ def squared_euclid_dist(X : torch.Tensor, Y : Optional[torch.Tensor] = None) -> 
         D2 = (X_n2[..., :, None] + Y_n2[..., None, :]) - 2 * matrix_mult(X, Y, transpose_Y=True)
     return D2
 
+# Accept signature input.
 class SignatureKernel():
     def __init__(self, static_kernel: Optional[Kernel] = None) -> None:
         '''
