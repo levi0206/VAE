@@ -2,6 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from lib.utils import sample_indices,compute_mmd
+from lib.aug import sig_normal
 
 class WAE(nn.Module):
     def __init__(self, x_aug_sig, epoch, batch_size, hidden_dims, device):
@@ -95,6 +96,7 @@ def WAE_train(model, optimizer):
         # Forward pass
         _,_,z = model.encode(sample_data)
         reconstructed_data = model.decode(z)
+        reconstructed_data = sig_normal(reconstructed_data,True)
 
         # Compute loss
         loss = model.loss(sample_data, reconstructed_data, z, lambda_mmd=10.0)

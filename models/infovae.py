@@ -3,6 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 from typing import List
 from lib.utils import sample_indices
+from lib.aug import sig_normal
 
 class InfoVAE(nn.Module):
     def __init__(self, x_aug_sig, epoch, batch_size, device, hidden_dims: List, kernel_width=1.0, lambda_=10, alpha=0.5):
@@ -107,6 +108,7 @@ def InfoVAE_train(model, optimizer):
         # Forward pass
         mean, log_var, z = model.encode(sample_data)
         reconstructed_data = model.decode(z)
+        reconstructed_data = sig_normal(reconstructed_data,True)
         
         # Compute loss
         loss = model.loss(mean, log_var, sample_data.view(model.batch_size, -1), reconstructed_data, z, z_prior)

@@ -3,6 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 from typing import List
 from lib.utils import sample_indices
+from lib.aug import sig_normal
 
 class VAE(nn.Module):
     def __init__(self, x_aug_sig, epoch, batch_size, device, hidden_dims: List) -> None:
@@ -85,6 +86,7 @@ def VAE_train(model,optimizer):
         mean, log_var, z = model.encode(sample_data)
         # Decode
         reconstructed_data = model.decode(z)
+        reconstructed_data = sig_normal(reconstructed_data,True)
         # Calculate loss
         loss = model.loss(mean,log_var,sample_data.view(model.batch_size,-1),reconstructed_data)
         loss_record.append(loss.item())
