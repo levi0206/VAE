@@ -23,4 +23,7 @@
     - Fix training loop.
     - We will use VAE, Beta-VAE, Info-VAE, and WAE-MMD for our experiments. 
     - Complete the full implementation for signature degree 3, 4, and 5.
-    - Complete the numerical experiments!
+- 0324:
+    - Add ``rolling_window_1D``.
+    - Start perform experiments with synthetic dataset (OU process).
+    - Normalize ``reconstructed_sig`` in the training and testing phase.
