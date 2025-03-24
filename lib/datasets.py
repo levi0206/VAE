@@ -53,6 +53,35 @@ def rolling_window(x: torch.Tensor, window_size: int):
     print("Tensor shape after rolling:",torch.stack(windowed_data, dim=0).shape)
     return torch.stack(windowed_data, dim=0)
 
+def rolling_window_1D(x: torch.Tensor, window_size: int):
+    '''
+    Creates rolling windows from a 1D tensor.
+    Input shape: (length,)
+    Output shape: (length - window_size + 1, window_size)
+    
+    See https://se.mathworks.com/help/econ/rolling-window-estimation-of-state-space-models.html
+    '''
+    # Ensure input is 1D
+    if len(x.shape) != 1:
+        raise ValueError("Input tensor must be 1D with shape (length,)")
+    
+    print("Tensor shape before rolling:", x.shape)
+    length = x.shape[0]
+    
+    # Check if window_size is valid
+    if window_size > length:
+        raise ValueError("Window size must be smaller than or equal to tensor length")
+    
+    windowed_data = []
+    for t in range(length - window_size + 1):
+        window = x[t:t + window_size]
+        windowed_data.append(window)
+    
+    result = torch.stack(windowed_data, dim=0)
+    print("Tensor shape after rolling:", result.shape)
+
+    return result
+
 def get_stock_price(data_config):
     """
     Get stock price.
