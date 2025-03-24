@@ -30,3 +30,4 @@
     - Finish OU process experiments.
     - Plot training loss.
     - Update MMD in ``metrics.py`` and results in each notebook.
+    - Plot testing results.
