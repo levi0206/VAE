@@ -13,6 +13,7 @@ class WAE(nn.Module):
         self.batch_size = batch_size
         self.device = device
         self.type = "WAE"
+        self.loss_record = []
         
         self.encoder_mu = nn.Sequential(
             nn.Linear(hidden_dims[0],hidden_dims[1]),
@@ -84,7 +85,6 @@ class WAE(nn.Module):
         return total_loss
 
 def WAE_train(model, optimizer):
-    loss_record = []
     early_stop = 400
     cnt = 0
     min_loss = float('inf')
@@ -100,7 +100,7 @@ def WAE_train(model, optimizer):
 
         # Compute loss
         loss = model.loss(sample_data, reconstructed_data, z, lambda_mmd=10.0)
-        loss_record.append(loss.item())
+        model.loss_record.append(loss.item())
 
         # Backpropogation
         optimizer.zero_grad()

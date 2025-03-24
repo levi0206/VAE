@@ -21,6 +21,7 @@ class InfoVAE(nn.Module):
         self.lambda_ = lambda_  # Weight for prior matching term
         self.alpha = alpha      # Weight for mutual information term
         self.type = "Info-VAE"
+        self.loss_record = []
 
         # Encoder & Decoder
         self.encoder_mu = nn.Sequential(
@@ -92,7 +93,6 @@ class InfoVAE(nn.Module):
         return self.decode(z)
 
 def InfoVAE_train(model, optimizer):
-    loss_record = []
     early_stop = 400
     cnt = 0
     min_loss = float('inf')
@@ -112,7 +112,7 @@ def InfoVAE_train(model, optimizer):
         
         # Compute loss
         loss = model.loss(mean, log_var, sample_data.view(model.batch_size, -1), reconstructed_data, z, z_prior)
-        loss_record.append(loss.item())
+        model.loss_record.append(loss.item())
 
         # Backpropagation
         optimizer.zero_grad()

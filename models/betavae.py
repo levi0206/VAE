@@ -18,6 +18,7 @@ class BetaVAE(nn.Module):
         self.device = device
         self.beta = beta
         self.type = "Beta-VAE"
+        self.loss_record = []
 
         # Assume len(hidden_dims)=3.
         self.encoder_mu = nn.Sequential(
@@ -96,7 +97,6 @@ class BetaVAE(nn.Module):
         return reconstructed_data
     
 def BetaVAE_train(model,optimizer,beta=1.0):
-    loss_record = []
     early_stop = 400
     cnt = 0
     min_loss = float('inf')
@@ -112,7 +112,7 @@ def BetaVAE_train(model,optimizer,beta=1.0):
         reconstructed_data = sig_normal(reconstructed_data,True)
         # Calculate loss
         loss = model.loss(model, mean,log_var,sample_data.view(model.batch_size,-1),reconstructed_data)
-        loss_record.append(loss.item())
+        model.loss_record.append(loss.item())
 
         # Backpropogation
         optimizer.zero_grad()

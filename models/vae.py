@@ -17,6 +17,7 @@ class VAE(nn.Module):
         self.batch_size = batch_size
         self.device = device
         self.type = "VAE"
+        self.loss_record = []
 
         # Assume len(hidden_dims)=3.
         self.encoder_mu = nn.Sequential(
@@ -73,7 +74,6 @@ class VAE(nn.Module):
         return reconstructed_data
     
 def VAE_train(model,optimizer):
-    loss_record = []
     early_stop = 400
     cnt = 0
     min_loss = float('inf')
@@ -89,7 +89,7 @@ def VAE_train(model,optimizer):
         reconstructed_data = sig_normal(reconstructed_data,True)
         # Calculate loss
         loss = model.loss(mean,log_var,sample_data.view(model.batch_size,-1),reconstructed_data)
-        loss_record.append(loss.item())
+        model.loss_record.append(loss.item())
 
         # Backpropogation
         optimizer.zero_grad()
