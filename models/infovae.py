@@ -90,6 +90,7 @@ class InfoVAE(nn.Module):
         return self.decode(z)
 
 def InfoVAE_train(model, optimizer):
+    loss_record = []
     early_stop = 400
     cnt = 0
     min_loss = float('inf')
@@ -108,6 +109,7 @@ def InfoVAE_train(model, optimizer):
         
         # Compute loss
         loss = model.loss(mean, log_var, sample_data.view(model.batch_size, -1), reconstructed_data, z, z_prior)
+        loss_record.append(loss.item())
 
         # Backpropagation
         optimizer.zero_grad()
@@ -117,7 +119,7 @@ def InfoVAE_train(model, optimizer):
 
         # Print loss
         if i % 100 == 0:
-            print(f"Epoch {i} loss {loss.item():.4f}")
+            print("Epoch {} loss {:.2f}".format(i,loss.item()))
 
         # Early stopping
         if loss.item() < min_loss:
@@ -126,5 +128,5 @@ def InfoVAE_train(model, optimizer):
         else:
             cnt += 1
             if cnt > early_stop:
-                print(f"min_loss: {min_loss:.4f}")
+                print("min_loss: {:.2f}".format(min_loss))
                 break

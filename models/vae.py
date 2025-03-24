@@ -71,6 +71,7 @@ class VAE(nn.Module):
         return reconstructed_data
     
 def VAE_train(model,optimizer):
+    loss_record = []
     early_stop = 400
     cnt = 0
     min_loss = float('inf')
@@ -85,6 +86,7 @@ def VAE_train(model,optimizer):
         reconstructed_data = model.decode(z)
         # Calculate loss
         loss = model.loss(mean,log_var,sample_data.view(model.batch_size,-1),reconstructed_data)
+        loss_record.append(loss.item())
 
         # Backpropogation
         optimizer.zero_grad()
@@ -94,7 +96,7 @@ def VAE_train(model,optimizer):
 
         # Print loss
         if i%100==0:
-            print("Epoch {} loss {:4f}".format(i,loss.item()))
+            print("Epoch {} loss {:.2f}".format(i,loss.item()))
 
         # Early stop
         if loss.item()<min_loss:
@@ -103,5 +105,5 @@ def VAE_train(model,optimizer):
         else:
             cnt += 1
             if cnt>early_stop:
-                print("min_loss: {:4f}".format(min_loss))
+                print("min_loss: {:.2f}".format(min_loss))
                 break

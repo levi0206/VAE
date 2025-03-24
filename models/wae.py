@@ -82,6 +82,7 @@ class WAE(nn.Module):
         return total_loss
 
 def WAE_train(model, optimizer):
+    loss_record = []
     early_stop = 400
     cnt = 0
     min_loss = float('inf')
@@ -96,6 +97,7 @@ def WAE_train(model, optimizer):
 
         # Compute loss
         loss = model.loss(sample_data, reconstructed_data, z, lambda_mmd=10.0)
+        loss_record.append(loss.item())
 
         # Backpropogation
         optimizer.zero_grad()
@@ -105,7 +107,7 @@ def WAE_train(model, optimizer):
 
         # Print loss
         if i%100==0:
-            print("Epoch {} loss {}".format(i,loss.item()))
+            print("Epoch {} loss {:.2f}".format(i,loss.item()))
         # Early stop
         if loss.item()<min_loss:
             min_loss = loss.item()
@@ -113,5 +115,5 @@ def WAE_train(model, optimizer):
         else:
             cnt += 1
             if cnt>early_stop:
-                print("min_loss: {:4f}".format(min_loss))
+                print("min_loss: {:.2f}".format(min_loss))
                 break
