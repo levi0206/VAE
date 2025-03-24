@@ -15,6 +15,7 @@ class VAE(nn.Module):
         self.epoch = epoch
         self.batch_size = batch_size
         self.device = device
+        self.type = "VAE"
 
         # Assume len(hidden_dims)=3.
         self.encoder_mu = nn.Sequential(

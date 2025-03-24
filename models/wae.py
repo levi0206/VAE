@@ -11,6 +11,7 @@ class WAE(nn.Module):
         self.epoch = epoch
         self.batch_size = batch_size
         self.device = device
+        self.type = "WAE"
         
         self.encoder_mu = nn.Sequential(
             nn.Linear(hidden_dims[0],hidden_dims[1]),

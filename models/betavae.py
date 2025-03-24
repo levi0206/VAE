@@ -16,6 +16,7 @@ class BetaVAE(nn.Module):
         self.batch_size = batch_size
         self.device = device
         self.beta = beta
+        self.type = "Beta-VAE"
 
         # Assume len(hidden_dims)=3.
         self.encoder_mu = nn.Sequential(

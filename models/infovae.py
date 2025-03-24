@@ -19,6 +19,7 @@ class InfoVAE(nn.Module):
         self.kernel_width = kernel_width
         self.lambda_ = lambda_  # Weight for prior matching term
         self.alpha = alpha      # Weight for mutual information term
+        self.type = "Info-VAE"
 
         # Encoder & Decoder
         self.encoder_mu = nn.Sequential(
